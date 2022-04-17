@@ -27,7 +27,6 @@ class ClassNameAnalytics {
     boolean isSALog = false
     boolean isKeyboardViewUtil = false
     def methodCells = new ArrayList<SensorsAnalyticsMethodCell>()
-    boolean isAppWebViewInterface = false
 
     ClassNameAnalytics(String className) {
         this.className = className
@@ -35,13 +34,11 @@ class ClassNameAnalytics {
         isSensorsDataUtils = (className == 'com.sensorsdata.analytics.android.sdk.util.SensorsDataUtils')
         isOAIDHelper = (className == 'com.sensorsdata.analytics.android.sdk.advert.utils.OaidHelper')
         isSALog = (className == 'com.sensorsdata.analytics.android.sdk.SALog')
-        isAppWebViewInterface = ((className == 'com.sensorsdata.analytics.android.sdk.AppWebViewInterface')
-                || (className == 'com.sensorsdata.analytics.android.sdk.visual.WebViewVisualInterface'))
         isKeyboardViewUtil = (className.startsWith(PACKAGE_START) && className.endsWith(KEY_KEYBOARD))
     }
 
     boolean isSDKFile() {
-        return isSALog || isSensorsDataAPI || isSensorsDataUtils || isAppWebViewInterface || isOAIDHelper || isKeyboardViewUtil
+        return isSALog || isSensorsDataAPI || isSensorsDataUtils || isOAIDHelper || isKeyboardViewUtil
     }
 
     boolean isLeanback() {

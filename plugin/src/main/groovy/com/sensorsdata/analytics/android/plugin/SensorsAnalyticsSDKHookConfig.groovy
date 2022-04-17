@@ -50,16 +50,6 @@ class SensorsAnalyticsSDKHookConfig {
         methodCells.put(methodName, sALogMethodCells)
     }
 
-    void disableJsInterface(String methodName) {
-        def showUpWebView = new SensorsAnalyticsMethodCell("showUpWebView", '(Landroid/webkit/WebView;Lorg/json/JSONObject;ZZ)V', "createShowUpWebViewFour")
-        def showUpX5WebView = new SensorsAnalyticsMethodCell("showUpX5WebView", '(Ljava/lang/Object;Lorg/json/JSONObject;ZZ)V', "createShowUpX5WebViewFour")
-        def showUpX5WebView2 = new SensorsAnalyticsMethodCell("showUpX5WebView", '(Ljava/lang/Object;Z)V', "createShowUpX5WebViewTwo")
-        def sensorsDataAPIMethods = [showUpWebView, showUpX5WebView, showUpX5WebView2]
-        def sensorsDataAPIMethodCells = new HashMap<String, ArrayList<SensorsAnalyticsMethodCell>>()
-        sensorsDataAPIMethodCells.put('com/sensorsdata/analytics/android/sdk/SensorsDataAPI', sensorsDataAPIMethods)
-        methodCells.put(methodName, sensorsDataAPIMethodCells)
-    }
-
     void disableMacAddress(String methodName) {
         def macAddress = new SensorsAnalyticsMethodCell('getMacAddress', '(Landroid/content/Context;)Ljava/lang/String;', 'createGetMacAddress')
         def macMethods = [macAddress]

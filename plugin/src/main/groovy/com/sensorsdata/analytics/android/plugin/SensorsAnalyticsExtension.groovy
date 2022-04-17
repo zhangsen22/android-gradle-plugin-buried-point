@@ -25,11 +25,8 @@ class SensorsAnalyticsExtension {
     public boolean disableJar = false
     public boolean useInclude = false
     public boolean lambdaEnabled = true
-    public boolean autoHandleWebView = true
     public boolean addUCJavaScriptInterface = false
-    public boolean addXWalkJavaScriptInterface = false
     public boolean lambdaParamOptimize = false
-    public boolean disableTrackPush = false
     public boolean disableCheckSDK = false
     public boolean disableTrackKeyboard = true
     public ArrayList<String> exclude = []
@@ -67,10 +64,6 @@ class SensorsAnalyticsExtension {
         return "\tdebug=" + debug + "\n" +
                 "\tdisableJar=" + disableJar + "\n" +
                 "\tuseInclude=" + useInclude + "\n" +
-                "\tdisableTrackPush=" + disableTrackPush + "\n" +
-                "\tautoHandleWebView=" + autoHandleWebView + "\n" +
-                "\taddUCJavaScriptInterface=" + addUCJavaScriptInterface + "\n" +
-                "\taddXWalkJavaScriptInterface=" + addXWalkJavaScriptInterface + "\n" +
                 "\tlambdaParamOptimize=" + lambdaParamOptimize + "\n" +
                 "\tlambdaEnabled=" + lambdaEnabled + "\n" +
                 "\tdisableCheckSDK=" + disableCheckSDK + "\n" +

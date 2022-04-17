@@ -125,7 +125,6 @@ class SensorsAnalyticsTransformHelper {
                     }
             }
             if (classNameAnalytics.methodCells.size() > 0 || classNameAnalytics.isSensorsDataAPI
-                    || (classNameAnalytics.isAppWebViewInterface && (extension.addUCJavaScriptInterface || extension.addXWalkJavaScriptInterface))
                     || classNameAnalytics.isKeyboardViewUtil) {
                 classNameAnalytics.isShouldModify = true
             }

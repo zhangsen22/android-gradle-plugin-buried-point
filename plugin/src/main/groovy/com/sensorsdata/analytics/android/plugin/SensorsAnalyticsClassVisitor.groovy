@@ -16,8 +16,6 @@
  */
 package com.sensorsdata.analytics.android.plugin
 
-import com.sensorsdata.analytics.android.plugin.push.SensorsAnalyticsPushMethodVisitor
-import com.sensorsdata.analytics.android.plugin.push.SensorsPushInjected
 import com.sensorsdata.analytics.android.plugin.hook.config.SensorsFragmentHookConfig
 import com.sensorsdata.analytics.android.plugin.utils.VersionUtils
 import org.objectweb.asm.AnnotationVisitor
@@ -106,10 +104,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
     @Override
     void visitEnd() {
         super.visitEnd()
-        if (!transformHelper.extension.disableTrackPush && !isFoundOnNewIntent && mSuperName == "android/app/Activity") {
-            SensorsPushInjected.addOnNewIntent(classVisitor)
-        }
-
         if (SensorsAnalyticsUtil.isInstanceOfFragment(mSuperName)) {
             MethodVisitor mv
             // 添加剩下的方法，确保super.onHiddenChanged(hidden);等先被调用
@@ -130,7 +124,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                 mv.visitInsn(Opcodes.RETURN)
                 mv.visitMaxs(methodCell.paramsCount, methodCell.paramsCount)
                 mv.visitEnd()
-                mv.visitAnnotation("Lcom/sensorsdata/analytics/android/sdk/SensorsDataInstrumented;", false)
             }
         }
 
@@ -190,35 +183,21 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
         }
 
         MethodVisitor methodVisitor = cv.visitMethod(access, name, desc, signature, exceptions)
-        if (transformHelper.extension != null && transformHelper.extension.autoHandleWebView && transformHelper.urlClassLoader != null) {
-            methodVisitor = new SensorsAnalyticsWebViewMethodVisitor(methodVisitor, access, name, desc, transformHelper, mClassName, mSuperName)
-        }
-
-        if (transformHelper.extension != null && !transformHelper.extension.disableTrackPush) {
-            methodVisitor = new SensorsAnalyticsPushMethodVisitor(methodVisitor, access, name, desc)
-        }
 
         SensorsAnalyticsDefaultMethodVisitor sensorsAnalyticsDefaultMethodVisitor = new SensorsAnalyticsDefaultMethodVisitor(methodVisitor, access, name, desc) {
             boolean isSensorsDataTrackViewOnClickAnnotation = false
-            boolean isSensorsDataIgnoreTrackOnClick = false
             String eventName = null
             String eventProperties = null
-            boolean isHasInstrumented = false
             boolean isHasTracked = false
             int variableID = 0
-            //nameDesc是'onClick(Landroid/view/View;)V'字符串
-            boolean isOnClickMethod = false
-            boolean isOnItemClickMethod = false
             //name + desc
             String nameDesc
-            boolean isSetUserVisibleHint = false
 
             //访问权限是public并且非静态
             boolean pubAndNoStaticAccess
             boolean protectedAndNotStaticAccess
             ArrayList<Integer> localIds
-            boolean shouldAddUCJS = false
-            boolean shouldAddXWalkJS = false
+
 
             @Override
             void visitEnd() {
@@ -227,14 +206,7 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                     if (transformHelper.extension.lambdaEnabled && mLambdaMethodCells.containsKey(nameDesc)) {
                         mLambdaMethodCells.remove(nameDesc)
                     }
-                    visitAnnotation("Lcom/sensorsdata/analytics/android/sdk/SensorsDataInstrumented;", false)
                     Logger.info("Hooked method: ${name}${desc}\n")
-                }
-                if (shouldAddUCJS) {
-                    visitAnnotation("Lcom/uc/webview/export/JavascriptInterface;", true)
-                }
-                if (shouldAddXWalkJS) {
-                    visitAnnotation("Lorg/xwalk/core/JavascriptInterface;", true)
                 }
             }
 
@@ -260,38 +232,11 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
             protected void onMethodEnter() {
                 super.onMethodEnter()
                 nameDesc = name + desc
-                // Hook Push
-                if (!SensorsAnalyticsUtil.isStatic(access) && !transformHelper.extension.disableTrackPush) {
-                    SensorsPushInjected.handlePush(methodVisitor, mSuperName, nameDesc)
-                }
 
                 pubAndNoStaticAccess = SensorsAnalyticsUtil.isPublic(access) && !SensorsAnalyticsUtil.isStatic(access)
                 protectedAndNotStaticAccess = SensorsAnalyticsUtil.isProtected(access) && !SensorsAnalyticsUtil.isStatic(access)
                 if (pubAndNoStaticAccess) {
-                    if ((nameDesc == 'onClick(Landroid/view/View;)V')) {
-                        isOnClickMethod = true
-                        variableID = newLocal(Type.getObjectType("java/lang/Integer"))
-                        methodVisitor.visitVarInsn(ALOAD, 1)
-                        methodVisitor.visitVarInsn(ASTORE, variableID)
-                    } else if (nameDesc == 'onItemClick(Landroid/widget/AdapterView;Landroid/view/View;IJ)V') {
-                        localIds = new ArrayList<>()
-                        isOnItemClickMethod = true
-
-                        int first = newLocal(Type.getObjectType("android/widget/AdapterView"))
-                        methodVisitor.visitVarInsn(ALOAD, 1)
-                        methodVisitor.visitVarInsn(ASTORE, first)
-                        localIds.add(first)
-
-                        int second = newLocal(Type.getObjectType("android/view/View"))
-                        methodVisitor.visitVarInsn(ALOAD, 2)
-                        methodVisitor.visitVarInsn(ASTORE, second)
-                        localIds.add(second)
-
-                        int third = newLocal(Type.INT_TYPE)
-                        methodVisitor.visitVarInsn(ILOAD, 3)
-                        methodVisitor.visitVarInsn(ISTORE, third)
-                        localIds.add(third)
-                    } else if (SensorsAnalyticsUtil.isInstanceOfFragment(mSuperName)
+                     if (SensorsAnalyticsUtil.isInstanceOfFragment(mSuperName)
                             && SensorsFragmentHookConfig.FRAGMENT_METHODS.get(nameDesc) != null) {
                         SensorsAnalyticsMethodCell sensorsAnalyticsMethodCell = SensorsFragmentHookConfig.FRAGMENT_METHODS.get(nameDesc)
                         localIds = new ArrayList<>()
@@ -302,126 +247,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                             methodVisitor.visitVarInsn(SensorsAnalyticsUtil.convertOpcodes(sensorsAnalyticsMethodCell.opcodes.get(i)), localId)
                             localIds.add(localId)
                         }
-                    } else if (nameDesc == "onCheckedChanged(Landroid/widget/RadioGroup;I)V") {
-                        localIds = new ArrayList<>()
-                        int firstLocalId = newLocal(Type.getObjectType("android/widget/RadioGroup"))
-                        methodVisitor.visitVarInsn(ALOAD, 1)
-                        methodVisitor.visitVarInsn(ASTORE, firstLocalId)
-                        localIds.add(firstLocalId)
-                        int secondLocalId = newLocal(Type.INT_TYPE)
-                        methodVisitor.visitVarInsn(ILOAD, 2)
-                        methodVisitor.visitVarInsn(ISTORE, secondLocalId)
-                        localIds.add(secondLocalId)
-                    } else if (nameDesc == "onCheckedChanged(Landroid/widget/CompoundButton;Z)V") {
-                        localIds = new ArrayList<>()
-                        int firstLocalId = newLocal(Type.getObjectType("android/widget/CompoundButton"))
-                        methodVisitor.visitVarInsn(ALOAD, 1)
-                        methodVisitor.visitVarInsn(ASTORE, firstLocalId)
-                        localIds.add(firstLocalId)
-                    } else if (nameDesc == "onClick(Landroid/content/DialogInterface;I)V") {
-                        localIds = new ArrayList<>()
-                        int firstLocalId = newLocal(Type.getObjectType("android/content/DialogInterface"))
-                        methodVisitor.visitVarInsn(ALOAD, 1)
-                        methodVisitor.visitVarInsn(ASTORE, firstLocalId)
-                        localIds.add(firstLocalId)
-                        int secondLocalId = newLocal(Type.INT_TYPE)
-                        methodVisitor.visitVarInsn(ILOAD, 2)
-                        methodVisitor.visitVarInsn(ISTORE, secondLocalId)
-                        localIds.add(secondLocalId)
-                    } else if (SensorsAnalyticsUtil.isTargetMenuMethodDesc(nameDesc)) {
-                        localIds = new ArrayList<>()
-                        int firstLocalId = newLocal(Type.getObjectType("java/lang/Object"))
-                        methodVisitor.visitVarInsn(ALOAD, 0)
-                        methodVisitor.visitVarInsn(ASTORE, firstLocalId)
-                        localIds.add(firstLocalId)
-                        int secondLocalId = newLocal(Type.getObjectType("android/view/MenuItem"))
-                        methodVisitor.visitVarInsn(ALOAD, 1)
-                        methodVisitor.visitVarInsn(ASTORE, secondLocalId)
-                        localIds.add(secondLocalId)
-                    } else if (nameDesc == "onMenuItemClick(Landroid/view/MenuItem;)Z") {
-                        localIds = new ArrayList<>()
-                        int firstLocalId = newLocal(Type.getObjectType("android/view/MenuItem"))
-                        methodVisitor.visitVarInsn(ALOAD, 1)
-                        methodVisitor.visitVarInsn(ASTORE, firstLocalId)
-                        localIds.add(firstLocalId)
-                    } else if (nameDesc == "onGroupClick(Landroid/widget/ExpandableListView;Landroid/view/View;IJ)Z") {
-                        localIds = new ArrayList<>()
-                        int firstLocalId = newLocal(Type.getObjectType("android/widget/ExpandableListView"))
-                        methodVisitor.visitVarInsn(ALOAD, 1)
-                        methodVisitor.visitVarInsn(ASTORE, firstLocalId)
-                        localIds.add(firstLocalId)
-
-                        int secondLocalId = newLocal(Type.getObjectType("android/view/View"))
-                        methodVisitor.visitVarInsn(ALOAD, 2)
-                        methodVisitor.visitVarInsn(ASTORE, secondLocalId)
-                        localIds.add(secondLocalId)
-
-                        int thirdLocalId = newLocal(Type.INT_TYPE)
-                        methodVisitor.visitVarInsn(ILOAD, 3)
-                        methodVisitor.visitVarInsn(ISTORE, thirdLocalId)
-                        localIds.add(thirdLocalId)
-                    } else if (nameDesc == "onChildClick(Landroid/widget/ExpandableListView;Landroid/view/View;IIJ)Z") {
-                        localIds = new ArrayList<>()
-                        int firstLocalId = newLocal(Type.getObjectType("android/widget/ExpandableListView"))
-                        methodVisitor.visitVarInsn(ALOAD, 1)
-                        methodVisitor.visitVarInsn(ASTORE, firstLocalId)
-                        localIds.add(firstLocalId)
-
-                        int secondLocalId = newLocal(Type.getObjectType("android/view/View"))
-                        methodVisitor.visitVarInsn(ALOAD, 2)
-                        methodVisitor.visitVarInsn(ASTORE, secondLocalId)
-                        localIds.add(secondLocalId)
-
-                        int thirdLocalId = newLocal(Type.INT_TYPE)
-                        methodVisitor.visitVarInsn(ILOAD, 3)
-                        methodVisitor.visitVarInsn(ISTORE, thirdLocalId)
-                        localIds.add(thirdLocalId)
-
-                        int fourthLocalId = newLocal(Type.INT_TYPE)
-                        methodVisitor.visitVarInsn(ILOAD, 4)
-                        methodVisitor.visitVarInsn(ISTORE, fourthLocalId)
-                        localIds.add(fourthLocalId)
-                    } else if (nameDesc == "onItemSelected(Landroid/widget/AdapterView;Landroid/view/View;IJ)V"
-                            || nameDesc == "onListItemClick(Landroid/widget/ListView;Landroid/view/View;IJ)V") {
-                        localIds = new ArrayList<>()
-                        int firstLocalId = newLocal(Type.getObjectType("java/lang/Object"))
-                        methodVisitor.visitVarInsn(ALOAD, 1)
-                        methodVisitor.visitVarInsn(ASTORE, firstLocalId)
-                        localIds.add(firstLocalId)
-
-                        int secondLocalId = newLocal(Type.getObjectType("android/view/View"))
-                        methodVisitor.visitVarInsn(ALOAD, 2)
-                        methodVisitor.visitVarInsn(ASTORE, secondLocalId)
-                        localIds.add(secondLocalId)
-
-                        int thirdLocalId = newLocal(Type.INT_TYPE)
-                        methodVisitor.visitVarInsn(ILOAD, 3)
-                        methodVisitor.visitVarInsn(ISTORE, thirdLocalId)
-                        localIds.add(thirdLocalId)
-                    } else if (nameDesc == "onStopTrackingTouch(Landroid/widget/SeekBar;)V") {
-                        localIds = new ArrayList<>()
-                        int firstLocalId = newLocal(Type.getObjectType("android/widget/SeekBar"))
-                        methodVisitor.visitVarInsn(ALOAD, 1)
-                        methodVisitor.visitVarInsn(ASTORE, firstLocalId)
-                        localIds.add(firstLocalId)
-                    }
-                } else if (protectedAndNotStaticAccess) {
-                    if (nameDesc == "onListItemClick(Landroid/widget/ListView;Landroid/view/View;IJ)V") {
-                        localIds = new ArrayList<>()
-                        int firstLocalId = newLocal(Type.getObjectType("java/lang/Object"))
-                        methodVisitor.visitVarInsn(ALOAD, 1)
-                        methodVisitor.visitVarInsn(ASTORE, firstLocalId)
-                        localIds.add(firstLocalId)
-
-                        int secondLocalId = newLocal(Type.getObjectType("android/view/View"))
-                        methodVisitor.visitVarInsn(ALOAD, 2)
-                        methodVisitor.visitVarInsn(ASTORE, secondLocalId)
-                        localIds.add(secondLocalId)
-
-                        int thirdLocalId = newLocal(Type.INT_TYPE)
-                        methodVisitor.visitVarInsn(ILOAD, 3)
-                        methodVisitor.visitVarInsn(ISTORE, thirdLocalId)
-                        localIds.add(thirdLocalId)
                     }
                 }
 
@@ -482,7 +307,7 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
             }
 
             void handleCode() {
-                if (isHasInstrumented || classNameAnalytics.isSensorsDataAPI) {
+                if (classNameAnalytics.isSensorsDataAPI) {
                     return
                 }
 
@@ -507,10 +332,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                         isHasTracked = true
                         return
                     }
-                }
-
-                if (isSensorsDataIgnoreTrackOnClick) {
-                    return
                 }
 
                 /**
@@ -549,25 +370,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                     }
                 }
 
-                if (isAndroidTv && isExtendsActivity && nameDesc == 'dispatchKeyEvent(Landroid/view/KeyEvent;)Z') {
-                    methodVisitor.visitVarInsn(ALOAD, 0)
-                    methodVisitor.visitVarInsn(ALOAD, 1)
-                    methodVisitor.visitMethodInsn(INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, "trackViewOnClick", "(Landroid/app/Activity;Landroid/view/KeyEvent;)V", false)
-                    isHasTracked = true
-                    return
-                }
-
-                if (handleRN()) {
-                    isHasTracked = true
-                    return
-                }
-
-                if (isOnClickMethod && mClassName == 'android/databinding/generated/callback/OnClickListener') {
-                    trackViewOnClick(methodVisitor, 1)
-                    isHasTracked = true
-                    return
-                }
-
                 if (!SensorsAnalyticsUtil.isTargetClassInSpecial(mClassName)) {
                     if ((mClassName.startsWith('android/') || mClassName.startsWith('androidx/')) && !(mClassName.startsWith("android/support/v17/leanback") || mClassName.startsWith("androidx/leanback"))) {
                         return
@@ -589,84 +391,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                 }
 
                 if (mInterfaces != null && mInterfaces.length > 0) {
-                   if (mInterfaces.contains('android/widget/RadioGroup$OnCheckedChangeListener')
-                            && nameDesc == 'onCheckedChanged(Landroid/widget/RadioGroup;I)V') {
-                        SensorsAnalyticsMethodCell sensorsAnalyticsMethodCell = SensorsAnalyticsHookConfig.INTERFACE_METHODS
-                                .get('android/widget/RadioGroup$OnCheckedChangeListeneronCheckedChanged(Landroid/widget/RadioGroup;I)V')
-                        if (sensorsAnalyticsMethodCell != null) {
-                            methodVisitor.visitVarInsn(ALOAD, localIds.get(0))
-                            methodVisitor.visitVarInsn(ILOAD, localIds.get(1))
-                            methodVisitor.visitMethodInsn(INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, sensorsAnalyticsMethodCell.agentName, sensorsAnalyticsMethodCell.agentDesc, false)
-                            isHasTracked = true
-                            return
-                        }
-                    } else if (mInterfaces.contains('android/widget/CompoundButton$OnCheckedChangeListener')
-                            && nameDesc == 'onCheckedChanged(Landroid/widget/CompoundButton;Z)V') {
-                        SensorsAnalyticsMethodCell sensorsAnalyticsMethodCell = SensorsAnalyticsHookConfig.INTERFACE_METHODS
-                                .get('android/widget/CompoundButton$OnCheckedChangeListeneronCheckedChanged(Landroid/widget/CompoundButton;Z)V')
-                        if (sensorsAnalyticsMethodCell != null) {
-                            methodVisitor.visitVarInsn(ALOAD, localIds.get(0))
-                            methodVisitor.visitMethodInsn(INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, sensorsAnalyticsMethodCell.agentName, sensorsAnalyticsMethodCell.agentDesc, false)
-                            isHasTracked = true
-                            return
-                        }
-                    } else if (mInterfaces.contains('android/content/DialogInterface$OnClickListener')
-                            && nameDesc == 'onClick(Landroid/content/DialogInterface;I)V') {
-                        SensorsAnalyticsMethodCell sensorsAnalyticsMethodCell = SensorsAnalyticsHookConfig.INTERFACE_METHODS
-                                .get('android/content/DialogInterface$OnClickListeneronClick(Landroid/content/DialogInterface;I)V')
-                        if (sensorsAnalyticsMethodCell != null) {
-                            methodVisitor.visitVarInsn(ALOAD, localIds.get(0))
-                            methodVisitor.visitVarInsn(ILOAD, localIds.get(1))
-                            methodVisitor.visitMethodInsn(INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, sensorsAnalyticsMethodCell.agentName, sensorsAnalyticsMethodCell.agentDesc, false)
-                            isHasTracked = true
-                            return
-                        }
-                    } else if (mInterfaces.contains('android/widget/ExpandableListView$OnGroupClickListener')
-                            && nameDesc == 'onGroupClick(Landroid/widget/ExpandableListView;Landroid/view/View;IJ)Z') {
-                        SensorsAnalyticsMethodCell sensorsAnalyticsMethodCell = SensorsAnalyticsHookConfig.INTERFACE_METHODS
-                                .get('android/widget/ExpandableListView$OnGroupClickListeneronGroupClick(Landroid/widget/ExpandableListView;Landroid/view/View;IJ)Z')
-                        if (sensorsAnalyticsMethodCell != null) {
-                            methodVisitor.visitVarInsn(ALOAD, localIds.get(0))
-                            methodVisitor.visitVarInsn(ALOAD, localIds.get(1))
-                            methodVisitor.visitVarInsn(ILOAD, localIds.get(2))
-                            methodVisitor.visitMethodInsn(INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, sensorsAnalyticsMethodCell.agentName, sensorsAnalyticsMethodCell.agentDesc, false)
-                            isHasTracked = true
-                            return
-                        }
-                    } else if (mInterfaces.contains('android/widget/ExpandableListView$OnChildClickListener')
-                            && nameDesc == 'onChildClick(Landroid/widget/ExpandableListView;Landroid/view/View;IIJ)Z') {
-                        SensorsAnalyticsMethodCell sensorsAnalyticsMethodCell = SensorsAnalyticsHookConfig.INTERFACE_METHODS
-                                .get('android/widget/ExpandableListView$OnChildClickListeneronChildClick(Landroid/widget/ExpandableListView;Landroid/view/View;IIJ)Z')
-                        if (sensorsAnalyticsMethodCell != null) {
-                            methodVisitor.visitVarInsn(ALOAD, localIds.get(0))
-                            methodVisitor.visitVarInsn(ALOAD, localIds.get(1))
-                            methodVisitor.visitVarInsn(ILOAD, localIds.get(2))
-                            methodVisitor.visitVarInsn(ILOAD, localIds.get(3))
-                            methodVisitor.visitMethodInsn(INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, sensorsAnalyticsMethodCell.agentName, sensorsAnalyticsMethodCell.agentDesc, false)
-                            isHasTracked = true
-                            return
-                        }
-                    } else if (nameDesc == 'onMenuItemClick(Landroid/view/MenuItem;)Z') {
-                        for (interfaceName in mInterfaces) {
-                            SensorsAnalyticsMethodCell sensorsAnalyticsMethodCell = SensorsAnalyticsHookConfig.INTERFACE_METHODS.get(interfaceName + nameDesc)
-                            if (sensorsAnalyticsMethodCell != null) {
-                                methodVisitor.visitVarInsn(ALOAD, localIds.get(0))
-                                methodVisitor.visitMethodInsn(INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, sensorsAnalyticsMethodCell.agentName, sensorsAnalyticsMethodCell.agentDesc, false)
-                                isHasTracked = true
-                                return
-                            }
-                        }
-                    } else if (mInterfaces.contains('android/widget/SeekBar$OnSeekBarChangeListener')
-                            && nameDesc == 'onStopTrackingTouch(Landroid/widget/SeekBar;)V') {
-                        SensorsAnalyticsMethodCell sensorsAnalyticsMethodCell = SensorsAnalyticsHookConfig.INTERFACE_METHODS
-                                .get('android/widget/SeekBar$OnSeekBarChangeListeneronStopTrackingTouch(Landroid/widget/SeekBar;)V')
-                        if (sensorsAnalyticsMethodCell != null) {
-                            methodVisitor.visitVarInsn(ALOAD, localIds.get(0))
-                            methodVisitor.visitMethodInsn(INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, sensorsAnalyticsMethodCell.agentName, sensorsAnalyticsMethodCell.agentDesc, false)
-                            isHasTracked = true
-                            return
-                        }
-                    } else {
                         for (interfaceName in mInterfaces) {
                             SensorsAnalyticsMethodCell sensorsAnalyticsMethodCell = SensorsAnalyticsHookConfig.INTERFACE_METHODS.get(interfaceName + nameDesc)
                             if (sensorsAnalyticsMethodCell != null) {
@@ -675,13 +399,9 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                                 return
                             }
                         }
-                    }
+
                 }
                 handleClassMethod(mClassName, nameDesc)
-                if (isOnClickMethod) {
-                    trackViewOnClick(methodVisitor, variableID)
-                    isHasTracked = true
-                }
             }
 
             void handleClassMethod(String className, String nameDesc) {
@@ -690,30 +410,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                     visitMethodWithLoadedParams(methodVisitor, INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, sensorsAnalyticsMethodCell.agentName, sensorsAnalyticsMethodCell.agentDesc, sensorsAnalyticsMethodCell.paramsStart, sensorsAnalyticsMethodCell.paramsCount, sensorsAnalyticsMethodCell.opcodes)
                     isHasTracked = true
                 }
-            }
-
-            boolean handleRN() {
-                boolean result = false
-                switch (transformHelper.rnState) {
-                    case SensorsAnalyticsTransformHelper.RN_STATE.HAS_VERSION:
-                        if (transformHelper.rnVersion > '2.0.0' && mSuperName == "com/facebook/react/uimanager/ViewGroupManager"
-                                && nameDesc == "addView(Landroid/view/ViewGroup;Landroid/view/View;I)V") {
-                            methodVisitor.visitVarInsn(ALOAD, 2)
-                            methodVisitor.visitVarInsn(ILOAD, 3)
-                            methodVisitor.visitMethodInsn(INVOKESTATIC, "com/sensorsdata/analytics/RNAgent", "addView", "(Landroid/view/View;I)V", false)
-                            result = true
-                        }
-
-                        if (nameDesc == 'handleTouchEvent(Landroid/view/MotionEvent;Lcom/facebook/react/uimanager/events/EventDispatcher;)V' && mClassName == 'com/facebook/react/uimanager/JSTouchDispatcher') {
-                            methodVisitor.visitVarInsn(ALOAD, 0)
-                            methodVisitor.visitVarInsn(ALOAD, 1)
-                            methodVisitor.visitVarInsn(ALOAD, 2)
-                            methodVisitor.visitMethodInsn(INVOKESTATIC, "com/sensorsdata/analytics/RNAgent", "handleTouchEvent", "(Lcom/facebook/react/uimanager/JSTouchDispatcher;Landroid/view/MotionEvent;Lcom/facebook/react/uimanager/events/EventDispatcher;)V", false)
-                            result = true
-                        }
-                        break
-                }
-                return result
             }
 
             void trackViewOnClick(MethodVisitor mv, int index) {
@@ -736,11 +432,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                 if (s == 'Lcom/sensorsdata/analytics/android/sdk/SensorsDataTrackViewOnClick;') {
                     isSensorsDataTrackViewOnClickAnnotation = true
                     Logger.info("发现 ${name}${desc} 有注解 @SensorsDataTrackViewOnClick")
-                } else if (s == 'Lcom/sensorsdata/analytics/android/sdk/SensorsDataIgnoreTrackOnClick;') {
-                    isSensorsDataIgnoreTrackOnClick = true
-                    Logger.info("发现 ${name}${desc} 有注解 @SensorsDataIgnoreTrackOnClick")
-                } else if (s == 'Lcom/sensorsdata/analytics/android/sdk/SensorsDataInstrumented;') {
-                    isHasInstrumented = true
                 } else if (s == 'Lcom/sensorsdata/analytics/android/sdk/SensorsDataTrackEvent;') {
                     return new AnnotationVisitor(SensorsAnalyticsUtil.ASM_VERSION) {
                         @Override
@@ -753,18 +444,12 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                             }
                         }
                     }
-                } else if (classNameAnalytics.isAppWebViewInterface && s == "Landroid/webkit/JavascriptInterface;") {
-                    shouldAddUCJS = transformHelper.extension.addUCJavaScriptInterface
-                    shouldAddXWalkJS = transformHelper.extension.addXWalkJavaScriptInterface
                 }
 
                 return super.visitAnnotation(s, b)
             }
         }
-        //如果java version 为1.5以前的版本，则使用JSRInlinerAdapter来删除JSR,RET指令
-        if (version <= Opcodes.V1_5) {
-            return new SensorsAnalyticsJSRAdapter(SensorsAnalyticsUtil.ASM_VERSION, sensorsAnalyticsDefaultMethodVisitor, access, name, desc, signature, exceptions)
-        }
+
         return sensorsAnalyticsDefaultMethodVisitor
     }
 
