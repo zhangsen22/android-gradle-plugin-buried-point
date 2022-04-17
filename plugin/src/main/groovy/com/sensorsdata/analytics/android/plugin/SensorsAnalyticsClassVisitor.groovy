@@ -533,16 +533,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                                 }
                             }
                         }
-                        boolean isStaticMethod = SensorsAnalyticsUtil.isStatic(access)
-                        if (!isStaticMethod) {
-                            if (lambdaMethodCell.desc == '(Landroid/view/MenuItem;)Z') {
-                                methodVisitor.visitVarInsn(Opcodes.ALOAD, 0)
-                                methodVisitor.visitVarInsn(Opcodes.ALOAD, getVisitPosition(lambdaTypes, paramStart, isStaticMethod))
-                                methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, lambdaMethodCell.agentName, '(Ljava/lang/Object;Landroid/view/MenuItem;)V', false)
-                                isHasTracked = true
-                                return
-                            }
-                        }
                         //如果在采样中，就按照最新的处理流程来操作
                         if (transformHelper.extension.lambdaParamOptimize || SensorsAnalyticsHookConfig.SAMPLING_LAMBDA_METHODS.contains(lambdaMethodCell)) {
                             for (int i = paramStart; i < paramStart + lambdaMethodCell.paramsCount; i++) {
@@ -568,18 +558,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                 }
 
                 if (handleRN()) {
-                    isHasTracked = true
-                    return
-                }
-
-                if (nameDesc == 'onDrawerOpened(Landroid/view/View;)V') {
-                    methodVisitor.visitVarInsn(ALOAD, 1)
-                    methodVisitor.visitMethodInsn(INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, "trackDrawerOpened", "(Landroid/view/View;)V", false)
-                    isHasTracked = true
-                    return
-                } else if (nameDesc == 'onDrawerClosed(Landroid/view/View;)V') {
-                    methodVisitor.visitVarInsn(ALOAD, 1)
-                    methodVisitor.visitMethodInsn(INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, "trackDrawerClosed", "(Landroid/view/View;)V", false)
                     isHasTracked = true
                     return
                 }
@@ -717,8 +695,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
             boolean handleRN() {
                 boolean result = false
                 switch (transformHelper.rnState) {
-                    case SensorsAnalyticsTransformHelper.RN_STATE.NOT_FOUND:
-                        break
                     case SensorsAnalyticsTransformHelper.RN_STATE.HAS_VERSION:
                         if (transformHelper.rnVersion > '2.0.0' && mSuperName == "com/facebook/react/uimanager/ViewGroupManager"
                                 && nameDesc == "addView(Landroid/view/ViewGroup;Landroid/view/View;I)V") {
@@ -733,16 +709,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                             methodVisitor.visitVarInsn(ALOAD, 1)
                             methodVisitor.visitVarInsn(ALOAD, 2)
                             methodVisitor.visitMethodInsn(INVOKESTATIC, "com/sensorsdata/analytics/RNAgent", "handleTouchEvent", "(Lcom/facebook/react/uimanager/JSTouchDispatcher;Landroid/view/MotionEvent;Lcom/facebook/react/uimanager/events/EventDispatcher;)V", false)
-                            result = true
-                        }
-                        break
-                    case SensorsAnalyticsTransformHelper.RN_STATE.NO_VERSION:
-                        if (nameDesc == 'setJSResponder(IIZ)V' && mClassName == 'com/facebook/react/uimanager/NativeViewHierarchyManager') {
-                            methodVisitor.visitVarInsn(ALOAD, 0)
-                            methodVisitor.visitVarInsn(ILOAD, 1)
-                            methodVisitor.visitVarInsn(ILOAD, 2)
-                            methodVisitor.visitVarInsn(ILOAD, 3)
-                            methodVisitor.visitMethodInsn(INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, "trackRN", "(Ljava/lang/Object;IIZ)V", false)
                             result = true
                         }
                         break
