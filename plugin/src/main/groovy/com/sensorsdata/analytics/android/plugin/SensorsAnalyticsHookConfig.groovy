@@ -57,14 +57,6 @@ class SensorsAnalyticsHookConfig {
                 1, 2,
                 [Opcodes.ALOAD, Opcodes.ILOAD]))
         addInterfaceMethod(new SensorsAnalyticsMethodCell(
-                'onClick',
-                '(Landroid/content/DialogInterface;I)V',
-                'android/content/DialogInterface$OnClickListener',
-                'trackDialog',
-                '(Landroid/content/DialogInterface;I)V',
-                1, 2,
-                [Opcodes.ALOAD, Opcodes.ILOAD]))
-        addInterfaceMethod(new SensorsAnalyticsMethodCell(
                 'onGroupClick',
                 '(Landroid/widget/ExpandableListView;Landroid/view/View;IJ)Z',
                 'android/widget/ExpandableListView$OnGroupClickListener',
@@ -104,14 +96,6 @@ class SensorsAnalyticsHookConfig {
                 '(Ljava/lang/Object;Ljava/lang/Object;)V',
                 0, 2,
                 [Opcodes.ALOAD, Opcodes.ALOAD]))
-        addInterfaceMethod(new SensorsAnalyticsMethodCell(
-                'onClick',
-                '(Landroid/content/DialogInterface;IZ)V',
-                'android/content/DialogInterface$OnMultiChoiceClickListener',
-                'trackDialog',
-                '(Landroid/content/DialogInterface;I)V',
-                1, 2,
-                [Opcodes.ALOAD, Opcodes.ILOAD]))
     }
 
     static {
@@ -212,14 +196,6 @@ class SensorsAnalyticsHookConfig {
                 1, 2,
                 [Opcodes.ALOAD, Opcodes.ILOAD]))
         addLambdaMethod(new SensorsAnalyticsMethodCell(
-                'onClick',
-                '(Landroid/content/DialogInterface;I)V',
-                'Landroid/content/DialogInterface$OnClickListener;',
-                'trackDialog',
-                '(Landroid/content/DialogInterface;I)V',
-                1, 2,
-                [Opcodes.ALOAD, Opcodes.ILOAD]))
-        addLambdaMethod(new SensorsAnalyticsMethodCell(
                 'onGroupClick',
                 '(Landroid/widget/ExpandableListView;Landroid/view/View;IJ)Z',
                 'Landroid/widget/ExpandableListView$OnGroupClickListener;',
@@ -243,14 +219,6 @@ class SensorsAnalyticsHookConfig {
                 '(Ljava/lang/String;)V',
                 1, 1,
                 [Opcodes.ALOAD]))
-        addLambdaMethod(new SensorsAnalyticsMethodCell(
-                'onClick',
-                '(Landroid/content/DialogInterface;IZ)V',
-                'Landroid/content/DialogInterface$OnMultiChoiceClickListener;',
-                'trackDialog',
-                '(Landroid/content/DialogInterface;I)V',
-                1, 2,
-                [Opcodes.ALOAD, Opcodes.ILOAD]))
 
         // Todo: 扩展
     }
