@@ -559,21 +559,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                     }
                 }
 
-                if (!pubAndNoStaticAccess) {
-                    //如果是 protected 那么也需要处理
-                    if (protectedAndNotStaticAccess) {
-                        if (nameDesc == "onListItemClick(Landroid/widget/ListView;Landroid/view/View;IJ)V") {
-                            methodVisitor.visitVarInsn(ALOAD, localIds.get(0))
-                            methodVisitor.visitVarInsn(ALOAD, localIds.get(1))
-                            methodVisitor.visitVarInsn(ILOAD, localIds.get(2))
-                            methodVisitor.visitMethodInsn(INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, "trackListView", "(Landroid/widget/AdapterView;Landroid/view/View;I)V", false)
-                            isHasTracked = true
-                            return
-                        }
-                    }
-                    return
-                }
-
                 if (isAndroidTv && isExtendsActivity && nameDesc == 'dispatchKeyEvent(Landroid/view/KeyEvent;)Z') {
                     methodVisitor.visitVarInsn(ALOAD, 0)
                     methodVisitor.visitVarInsn(ALOAD, 1)
@@ -611,15 +596,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                     }
                 }
 
-                if (nameDesc == 'onItemSelected(Landroid/widget/AdapterView;Landroid/view/View;IJ)V' || nameDesc == "onListItemClick(Landroid/widget/ListView;Landroid/view/View;IJ)V") {
-                    methodVisitor.visitVarInsn(ALOAD, localIds.get(0))
-                    methodVisitor.visitVarInsn(ALOAD, localIds.get(1))
-                    methodVisitor.visitVarInsn(ILOAD, localIds.get(2))
-                    methodVisitor.visitMethodInsn(INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, "trackListView", "(Landroid/widget/AdapterView;Landroid/view/View;I)V", false)
-                    isHasTracked = true
-                    return
-                }
-
                 if (isSensorsDataTrackViewOnClickAnnotation && desc == '(Landroid/view/View;)V') {
                     trackViewOnClick(methodVisitor, 1)
                     isHasTracked = true
@@ -635,14 +611,7 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                 }
 
                 if (mInterfaces != null && mInterfaces.length > 0) {
-                    if (isOnItemClickMethod && mInterfaces.contains('android/widget/AdapterView$OnItemClickListener')) {
-                        methodVisitor.visitVarInsn(ALOAD, localIds.get(0))
-                        methodVisitor.visitVarInsn(ALOAD, localIds.get(1))
-                        methodVisitor.visitVarInsn(ILOAD, localIds.get(2))
-                        methodVisitor.visitMethodInsn(INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, "trackListView", "(Landroid/widget/AdapterView;Landroid/view/View;I)V", false)
-                        isHasTracked = true
-                        return
-                    } else if (mInterfaces.contains('android/widget/RadioGroup$OnCheckedChangeListener')
+                   if (mInterfaces.contains('android/widget/RadioGroup$OnCheckedChangeListener')
                             && nameDesc == 'onCheckedChanged(Landroid/widget/RadioGroup;I)V') {
                         SensorsAnalyticsMethodCell sensorsAnalyticsMethodCell = SensorsAnalyticsHookConfig.INTERFACE_METHODS
                                 .get('android/widget/RadioGroup$OnCheckedChangeListeneronCheckedChanged(Landroid/widget/RadioGroup;I)V')

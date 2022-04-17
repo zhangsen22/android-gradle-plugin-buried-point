@@ -65,14 +65,6 @@ class SensorsAnalyticsHookConfig {
                 1, 2,
                 [Opcodes.ALOAD, Opcodes.ILOAD]))
         addInterfaceMethod(new SensorsAnalyticsMethodCell(
-                'onItemSelected',
-                '(Landroid/widget/AdapterView;Landroid/view/View;IJ)V',
-                'android/widget/AdapterView$OnItemSelectedListener',
-                'trackListView',
-                '(Landroid/widget/AdapterView;Landroid/view/View;I)V',
-                1, 3,
-                [Opcodes.ALOAD, Opcodes.ALOAD, Opcodes.ILOAD]))
-        addInterfaceMethod(new SensorsAnalyticsMethodCell(
                 'onGroupClick',
                 '(Landroid/widget/ExpandableListView;Landroid/view/View;IJ)Z',
                 'android/widget/ExpandableListView$OnGroupClickListener',
@@ -227,22 +219,6 @@ class SensorsAnalyticsHookConfig {
                 '(Landroid/content/DialogInterface;I)V',
                 1, 2,
                 [Opcodes.ALOAD, Opcodes.ILOAD]))
-        addLambdaMethod(new SensorsAnalyticsMethodCell(
-                'onItemClick',
-                '(Landroid/widget/AdapterView;Landroid/view/View;IJ)V',
-                'Landroid/widget/AdapterView$OnItemClickListener;',
-                'trackListView',
-                '(Landroid/widget/AdapterView;Landroid/view/View;I)V',
-                1, 3,
-                [Opcodes.ALOAD, Opcodes.ALOAD, Opcodes.ILOAD]))
-        SAMPLING_LAMBDA_METHODS.add(new SensorsAnalyticsMethodCell(
-                'onItemClick',
-                '(Landroid/widget/AdapterView;Landroid/view/View;IJ)V',
-                'Landroid/widget/AdapterView$OnItemClickListener;',
-                'trackListView',
-                '(Landroid/widget/AdapterView;Landroid/view/View;I)V',
-                1, 3,
-                [Opcodes.ALOAD, Opcodes.ALOAD, Opcodes.ILOAD]))
         addLambdaMethod(new SensorsAnalyticsMethodCell(
                 'onGroupClick',
                 '(Landroid/widget/ExpandableListView;Landroid/view/View;IJ)Z',
