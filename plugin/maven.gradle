@@ -1,0 +1,12 @@
+apply plugin: 'maven'
+
+uploadArchives {
+    repositories.mavenDeployer {
+        repository(url: uri(rootProject.mavenUrl))
+        pom.project {
+            groupId rootProject.groupId
+            artifactId rootProject.artifactId_startup_gradle_plugin
+            version rootProject.version
+        }
+    }
+}
