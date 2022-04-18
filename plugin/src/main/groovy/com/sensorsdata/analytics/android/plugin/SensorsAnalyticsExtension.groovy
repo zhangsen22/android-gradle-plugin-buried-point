@@ -25,7 +25,6 @@ class SensorsAnalyticsExtension {
     public boolean disableJar = false
     public boolean useInclude = false
     public boolean lambdaEnabled = true
-    public boolean addUCJavaScriptInterface = false
     public boolean lambdaParamOptimize = false
     public boolean disableCheckSDK = false
     public boolean disableTrackKeyboard = true
