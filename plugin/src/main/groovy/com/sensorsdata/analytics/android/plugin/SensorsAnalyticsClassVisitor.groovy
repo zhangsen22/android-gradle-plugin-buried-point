@@ -401,15 +401,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                         }
 
                 }
-                handleClassMethod(mClassName, nameDesc)
-            }
-
-            void handleClassMethod(String className, String nameDesc) {
-                SensorsAnalyticsMethodCell sensorsAnalyticsMethodCell = SensorsAnalyticsHookConfig.CLASS_METHODS.get(className + nameDesc)
-                if (sensorsAnalyticsMethodCell != null) {
-                    visitMethodWithLoadedParams(methodVisitor, INVOKESTATIC, SensorsAnalyticsHookConfig.SENSORS_ANALYTICS_API, sensorsAnalyticsMethodCell.agentName, sensorsAnalyticsMethodCell.agentDesc, sensorsAnalyticsMethodCell.paramsStart, sensorsAnalyticsMethodCell.paramsCount, sensorsAnalyticsMethodCell.opcodes)
-                    isHasTracked = true
-                }
             }
 
             void trackViewOnClick(MethodVisitor mv, int index) {

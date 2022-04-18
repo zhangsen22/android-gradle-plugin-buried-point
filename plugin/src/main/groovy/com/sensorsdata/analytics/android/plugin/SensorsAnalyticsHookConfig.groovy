@@ -21,43 +21,6 @@ import org.objectweb.asm.Opcodes
 class SensorsAnalyticsHookConfig {
     public static final String SENSORS_ANALYTICS_API = "com/sensorsdata/analytics/android/sdk/SensorsDataAutoTrackHelper"
     public final static HashMap<String, SensorsAnalyticsMethodCell> INTERFACE_METHODS = new HashMap<>()
-    public final static HashMap<String, SensorsAnalyticsMethodCell> CLASS_METHODS = new HashMap<>()
-
-    static {
-        addClassMethod(new SensorsAnalyticsMethodCell(
-                'performClick',
-                '()Z',
-                'androidx/appcompat/widget/ActionMenuPresenter$OverflowMenuButton',
-                'trackViewOnClick',
-                '(Landroid/view/View;)V',
-                0, 1,
-                [Opcodes.ALOAD]))
-
-        addClassMethod(new SensorsAnalyticsMethodCell(
-                'performClick',
-                '()Z',
-                'android/support/v7/widget/ActionMenuPresenter$OverflowMenuButton',
-                'trackViewOnClick',
-                '(Landroid/view/View;)V',
-                0, 1,
-                [Opcodes.ALOAD]))
-
-        addClassMethod(new SensorsAnalyticsMethodCell(
-                'performClick',
-                '()Z',
-                'android/widget/ActionMenuPresenter$OverflowMenuButton',
-                'trackViewOnClick',
-                '(Landroid/view/View;)V',
-                0, 1,
-                [Opcodes.ALOAD]))
-    }
-
-
-    static void addClassMethod(SensorsAnalyticsMethodCell sensorsAnalyticsMethodCell) {
-        if (sensorsAnalyticsMethodCell != null) {
-            CLASS_METHODS.put(sensorsAnalyticsMethodCell.parent + sensorsAnalyticsMethodCell.name + sensorsAnalyticsMethodCell.desc, sensorsAnalyticsMethodCell)
-        }
-    }
 
     /**
      * android.gradle 3.2.1 版本中，针对 Lambda 表达式处理

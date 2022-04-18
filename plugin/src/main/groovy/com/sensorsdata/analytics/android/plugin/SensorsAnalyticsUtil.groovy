@@ -26,16 +26,10 @@ import org.objectweb.asm.Type
 class SensorsAnalyticsUtil {
     public static final int ASM_VERSION = Opcodes.ASM7
     private static final HashSet<String> targetFragmentClass = new HashSet()
-    private static final HashSet<String> targetMenuMethodDesc = new HashSet()
     private static final HashSet<String> specialClass = new HashSet()
     private static final HashSet<String> targetActivityClass = new HashSet<>()
 
     static {
-        /**
-         * Menu
-         */
-        targetMenuMethodDesc.add("onContextItemSelected(Landroid/view/MenuItem;)Z")
-        targetMenuMethodDesc.add("onOptionsItemSelected(Landroid/view/MenuItem;)Z")
 
         /**
          * For Android App Fragment
@@ -80,10 +74,6 @@ class SensorsAnalyticsUtil {
 
     static boolean isProtected(int access) {
         return (access & Opcodes.ACC_PROTECTED) != 0
-    }
-
-    static boolean isTargetMenuMethodDesc(String nameDesc) {
-        return targetMenuMethodDesc.contains(nameDesc)
     }
 
     static boolean isInstanceOfFragment(String superName) {
