@@ -137,7 +137,6 @@ class SensorsAnalyticsTransform extends Transform {
 
     private void beforeTransform(TransformInvocation transformInvocation) {
         //打印提示信息
-        Logger.printCopyright()
         Logger.setDebug(transformHelper.extension.debug)
         transformHelper.onTransform()
         println("[SensorsAnalytics]: 是否开启多线程编译:${!transformHelper.disableSensorsAnalyticsMultiThread}")

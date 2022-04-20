@@ -28,25 +28,6 @@ class Logger {
     public static ConcurrentHashMap<Integer, String> opCodeMap = new ConcurrentHashMap<>()
 
     /**
-     * 打印提示信息
-     */
-    static void printCopyright() {
-        println()
-        println("${LogUI.C_BLACK_GREEN.value}" + "####################################################################" + "${LogUI.E_NORMAL.value}")
-        println("${LogUI.C_BLACK_GREEN.value}" + "###                                                              ###" + "${LogUI.E_NORMAL.value}")
-        println("${LogUI.C_BLACK_GREEN.value}" + "###                                                              ###" + "${LogUI.E_NORMAL.value}")
-        println("${LogUI.C_BLACK_GREEN.value}" + "###          欢迎使用 SensorsAnalytics® (v" + SensorsAnalyticsTransform.VERSION + ")编译插件         ###" + "${LogUI.E_NORMAL.value}")
-        println("${LogUI.C_BLACK_GREEN.value}" + "###               使用过程中碰到任何问题请联系我们               ###" + "${LogUI.E_NORMAL.value}")
-        println("${LogUI.C_BLACK_GREEN.value}" + "###                      QQ 群号：785122381                      ###" + "${LogUI.E_NORMAL.value}")
-        println("${LogUI.C_BLACK_GREEN.value}" + "###                         GitHub 地址：                        ###" + "${LogUI.E_NORMAL.value}")
-        println("${LogUI.C_BLACK_GREEN.value}" + "###     https://github.com/sensorsdata/sa-sdk-android-plugin2    ###" + "${LogUI.E_NORMAL.value}")
-        println("${LogUI.C_BLACK_GREEN.value}" + "###                                                              ###" + "${LogUI.E_NORMAL.value}")
-        println("${LogUI.C_BLACK_GREEN.value}" + "###                                                              ###" + "${LogUI.E_NORMAL.value}")
-        println("${LogUI.C_BLACK_GREEN.value}" + "####################################################################" + "${LogUI.E_NORMAL.value}")
-        println()
-    }
-
-    /**
      * 设置是否打印日志
      */
     static void setDebug(boolean isDebug) {

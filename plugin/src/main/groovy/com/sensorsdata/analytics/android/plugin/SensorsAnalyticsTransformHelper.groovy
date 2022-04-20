@@ -24,7 +24,6 @@ class SensorsAnalyticsTransformHelper {
     AppExtension android
     RN_STATE rnState = RN_STATE.NOT_FOUND
     String rnVersion = ""
-    SensorsAnalyticsSDKHookConfig sensorsAnalyticsHookConfig
     boolean disableSensorsAnalyticsMultiThread
     boolean disableSensorsAnalyticsIncremental
     boolean isHookOnMethodEnter
@@ -101,7 +100,6 @@ class SensorsAnalyticsTransformHelper {
     }
 
     private void createSensorsAnalyticsHookConfig() {
-        sensorsAnalyticsHookConfig = new SensorsAnalyticsSDKHookConfig()
         List<MetaProperty> metaProperties = SensorsAnalyticsSDKExtension.getMetaClass().properties
         for (it in metaProperties) {
             if (it.name == 'class') {
@@ -116,14 +114,6 @@ class SensorsAnalyticsTransformHelper {
     ClassNameAnalytics analytics(String className) {
         ClassNameAnalytics classNameAnalytics = new ClassNameAnalytics(className)
         if (classNameAnalytics.isSDKFile()) {
-            def cellHashMap = sensorsAnalyticsHookConfig.methodCells
-            cellHashMap.each {
-                key, value ->
-                    def methodCellList = value.get(className.replace('.', '/'))
-                    if (methodCellList != null) {
-                        classNameAnalytics.methodCells.addAll(methodCellList)
-                    }
-            }
             if (classNameAnalytics.methodCells.size() > 0 || classNameAnalytics.isSensorsDataAPI
                     || classNameAnalytics.isKeyboardViewUtil) {
                 classNameAnalytics.isShouldModify = true
