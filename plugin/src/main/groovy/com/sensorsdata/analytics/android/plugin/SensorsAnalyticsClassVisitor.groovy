@@ -126,10 +126,6 @@ class SensorsAnalyticsClassVisitor extends ClassVisitor {
                 mv.visitEnd()
             }
         }
-
-        for (cell in methodCells) {
-            transformHelper.sensorsAnalyticsHookConfig."${cell.agentName}"(classVisitor, cell)
-        }
         if (Logger.debug) {
             Logger.info("结束扫描类：${mClassName}\n")
         }

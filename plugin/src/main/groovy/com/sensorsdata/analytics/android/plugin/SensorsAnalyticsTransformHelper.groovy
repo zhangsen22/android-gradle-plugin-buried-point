@@ -96,19 +96,6 @@ class SensorsAnalyticsTransformHelper {
         if (includePackages != null) {
             include.addAll(includePackages)
         }
-        createSensorsAnalyticsHookConfig()
-    }
-
-    private void createSensorsAnalyticsHookConfig() {
-        List<MetaProperty> metaProperties = SensorsAnalyticsSDKExtension.getMetaClass().properties
-        for (it in metaProperties) {
-            if (it.name == 'class') {
-                continue
-            }
-            if (extension.sdk."${it.name}") {
-                sensorsAnalyticsHookConfig."${it.name}"(it.name)
-            }
-        }
     }
 
     ClassNameAnalytics analytics(String className) {
